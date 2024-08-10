@@ -1,5 +1,7 @@
 #py AiArtImpostorPutCustomTitle.py
 #py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --icon=AiArtImpostorPutCustomTitle.ico --add-data AiArtImpostorPutCustomTitle.ico:. --noconsole
+#↓コンソールが不要な場合は以下を選択。コンソールを残したままにしたい場合↑でEXEを作る
+#py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --noconsole
 from pywinauto import Desktop
 from pywinauto.application import Application
 from pywinauto import timings
@@ -16,7 +18,7 @@ import tkinter.messagebox as messagebox
 import os
 import time
 import sys
-import traceback
+#import traceback
 import csv
 
 import ctypes #AIArtImpostorの位置を取得
@@ -31,9 +33,6 @@ from bisect import bisect_left #近似値を求める時につかう
 
 #debug
 #import pprint
-
-#↓コンソールが不要な場合は以下を選択。コンソールを残したままにしたい場合↑でEXEを作る
-#py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --noconsole
 
 #ログなどの差別化のため日付時刻取得
 #https://note.nkmk.me/python-datetime-usage/
@@ -287,11 +286,15 @@ def import_from_csv():
     
     basename = os.path.basename(file_name)
     
-    #csv読み込み開始
-    with open(file_name ,encoding="utf_8") as f:
-        reader = csv.reader(f)
-        for row in reader:
-            wTitles.append(stripQuote(row[0].strip()))
+    #csv読み込み開始 エラー処理入れる
+    try:
+        with open(file_name ,encoding=combobox_encode.get()) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                wTitles.append(stripQuote(row[0].strip()))
+        label_memo2.config(text="CSVを読込、内容を各項目に反映しました。", foreground="black")
+    except:
+        label_memo2.config(text="CSVの読込に失敗しました。ファイルの権限や文字コードを見直して下さい。", foreground="red")
     
     #txtに入れていく 左列から埋めて、その後右列
     adjustTitles(True)
@@ -388,61 +391,65 @@ def copy_to_screen():
     if setFocusGameWindow() == False:
         return
     #print("11:" + str(datetime.datetime.now()))
-    #debug
-    #print(GetWindowRectFromName(GAME_TITLE)) #右上に強引に持ってたら　私の環境だと(1024, 0, 2320, 759)になった
-    gameWindowPosTpl = GetWindowRectFromName(GAME_TITLE)
-    #共通変数の値を調整する
-    getBaseDistance(gameWindowPosTpl[2] - gameWindowPosTpl[0] + gameWindowPosTpl[3] - gameWindowPosTpl[1])
-    #print("12:" + str(datetime.datetime.now()))
-    #debug　試しにカテゴリーに値が入るかやってみる
-    #print(f"X:{wCATEGORY_TXT_X}")
-    #print(f"Y:{wCATEGORY_TXT_Y}")
     
-    #マウスをカテゴリーのテキスト入力まで移動
-    #print(f"x:{gameWindowPosTpl[0] + CATEGORY_TXT_POS[0]}, y:{gameWindowPosTpl[1] + CATEGORY_TXT_POS[1]}")
-    categoryX,categoryY = gameWindowPosTpl[0] + wCATEGORY_TXT_X,gameWindowPosTpl[1] + wCATEGORY_TXT_Y
-    pyautogui.moveTo(categoryX,categoryY)
-    pyautogui.click(categoryX,categoryY)
-    #print("13:" + str(datetime.datetime.now()))
-    #https://qiita.com/umashikate/items/98c94cdd269ea26c41c6
-    #CTRL + A で、まずカテゴリーを消す
-    pyautogui.hotkey('ctrl', 'a')
-    time.sleep(MIN_WAIT)
-    pyautogui.press('delete')
-    time.sleep(MIN_WAIT)
-    
-    #1文字ごとに0.25秒の間隔で入力
-    #pyautogui.write('Hello world!', interval=0.25)
-    #これでコピペ出来る
-    pyperclip.copy(txt_category.get(1.0, tk.END).strip()) #こっちがクリップボード
-    pyautogui.hotkey('ctrl', 'v') #こっちがペーストのホットキー
-    
-    #ということで、後は６行＊３列に対して、ぐるぐる回すことにする
-    adjustTitles(False)
-    
-    #カテゴリーの位置から計算して、左上から入力していく
-    for i in range(MAX_ROWGAME):
-         pyperclip.copy(wTitles[i * 3])
-         pyautogui.moveTo(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.click(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.hotkey('ctrl', 'v')
-         
-         pyperclip.copy(wTitles[i * 3 + 1])
-         pyautogui.moveTo(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.click(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.hotkey('ctrl', 'v')
-         
-         #18番目は入力できないので飛ばす
-         if i * 3 + 2 < LAST_TITLE_INDEX - 1:
-             pyperclip.copy(wTitles[i * 3 + 2])
-             pyautogui.moveTo(categoryX + TITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-             pyautogui.click(categoryX + TITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+    try:
+        #debug
+        #print(GetWindowRectFromName(GAME_TITLE)) #右上に強引に持ってたら　私の環境だと(1024, 0, 2320, 759)になった
+        gameWindowPosTpl = GetWindowRectFromName(GAME_TITLE)
+        #共通変数の値を調整する
+        getBaseDistance(gameWindowPosTpl[2] - gameWindowPosTpl[0] + gameWindowPosTpl[3] - gameWindowPosTpl[1])
+        #print("12:" + str(datetime.datetime.now()))
+        #debug　試しにカテゴリーに値が入るかやってみる
+        #print(f"X:{wCATEGORY_TXT_X}")
+        #print(f"Y:{wCATEGORY_TXT_Y}")
+        
+        #マウスをカテゴリーのテキスト入力まで移動
+        #print(f"x:{gameWindowPosTpl[0] + CATEGORY_TXT_POS[0]}, y:{gameWindowPosTpl[1] + CATEGORY_TXT_POS[1]}")
+        categoryX,categoryY = gameWindowPosTpl[0] + wCATEGORY_TXT_X,gameWindowPosTpl[1] + wCATEGORY_TXT_Y
+        pyautogui.moveTo(categoryX,categoryY)
+        pyautogui.click(categoryX,categoryY)
+        #print("13:" + str(datetime.datetime.now()))
+        #https://qiita.com/umashikate/items/98c94cdd269ea26c41c6
+        #CTRL + A で、まずカテゴリーを消す
+        pyautogui.hotkey('ctrl', 'a')
+        time.sleep(MIN_WAIT)
+        pyautogui.press('delete')
+        time.sleep(MIN_WAIT)
+        
+        #1文字ごとに0.25秒の間隔で入力
+        #pyautogui.write('Hello world!', interval=0.25)
+        #これでコピペ出来る
+        pyperclip.copy(txt_category.get(1.0, tk.END).strip()) #こっちがクリップボード
+        pyautogui.hotkey('ctrl', 'v') #こっちがペーストのホットキー
+        
+        #ということで、後は６行＊３列に対して、ぐるぐる回すことにする
+        adjustTitles(False)
+        
+        #カテゴリーの位置から計算して、左上から入力していく
+        for i in range(MAX_ROWGAME):
+             pyperclip.copy(wTitles[i * 3])
+             pyautogui.moveTo(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+             pyautogui.click(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
              pyautogui.hotkey('ctrl', 'v')
-    
-    #項目が編集中のままだと、全体に反映されないので、故意にカテゴリーをクリックしておく
-    pyautogui.moveTo(categoryX,categoryY)
-    pyautogui.click(categoryX,categoryY)
-    
+             
+             pyperclip.copy(wTitles[i * 3 + 1])
+             pyautogui.moveTo(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+             pyautogui.click(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+             pyautogui.hotkey('ctrl', 'v')
+             
+             #18番目は入力できないので飛ばす
+             if i * 3 + 2 < LAST_TITLE_INDEX - 1:
+                 pyperclip.copy(wTitles[i * 3 + 2])
+                 pyautogui.moveTo(categoryX + TITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+                 pyautogui.click(categoryX + TITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+                 pyautogui.hotkey('ctrl', 'v')
+        
+        #項目が編集中のままだと、全体に反映されないので、故意にカテゴリーをクリックしておく
+        pyautogui.moveTo(categoryX,categoryY)
+        pyautogui.click(categoryX,categoryY)
+        label_memo2.config(text="各項目からゲーム画面へコピーしました。", foreground="black")
+    except:
+        label_memo2.config(text="ゲーム画面操作でエラーが発生しました。お題などが読み込める状態で再実行して下さい。", foreground="red")
     
 #ゲーム画面からテキストへ反映する
 def import_from_screen():
@@ -453,55 +460,60 @@ def import_from_screen():
     if setFocusGameWindow() == False:
         return
     
-    #debug
-    #print(GetWindowRectFromName(GAME_TITLE)) #右上に強引に持ってたら　私の環境だと(1024, 0, 2320, 759)になった
-    gameWindowPosTpl = GetWindowRectFromName(GAME_TITLE)
-    #共通変数の値を調整する
-    getBaseDistance(gameWindowPosTpl[2] - gameWindowPosTpl[0] + gameWindowPosTpl[3] - gameWindowPosTpl[1])
-    
-    #debug
-    #マウスをカテゴリーのテキスト入力まで移動
-    #print(f"x:{gameWindowPosTpl[0] + CATEGORY_TXT_POS[0]}, y:{gameWindowPosTpl[1] + CATEGORY_TXT_POS[1]}")
-    categoryX,categoryY = gameWindowPosTpl[0] + wCATEGORY_TXT_X,gameWindowPosTpl[1] + wCATEGORY_TXT_Y
-    pyautogui.moveTo(categoryX,categoryY)
-    pyautogui.click(categoryX,categoryY)
-    
-    #https://qiita.com/umashikate/items/98c94cdd269ea26c41c6
-    #CTRL + A で、まずカテゴリーを消す
-    pyautogui.hotkey('ctrl', 'a')
-    time.sleep(MIN_WAIT)
-    pyautogui.hotkey('ctrl', 'c')
-    time.sleep(MIN_WAIT)
-    
-    #カテゴリーテキストへ反映
-    txt_category.insert(0.,stripQuote(pyperclip.paste()))
-    
-    #カテゴリーの位置から計算して、左上からコピーしていく
-    wTitles = []
-    for i in range(MAX_ROWGAME):
-         pyautogui.moveTo(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.click(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.hotkey('ctrl', 'c')
-         wTitles.append(stripQuote(pyperclip.paste()))
-         
-         pyautogui.moveTo(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.click(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-         pyautogui.hotkey('ctrl', 'c')
-         wTitles.append(stripQuote(pyperclip.paste()))
-         
-         #18番目は入力できないので飛ばす
-         if i * 3 + 2 < LAST_TITLE_INDEX - 1:
-             pyautogui.moveTo(categoryX + wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
-             pyautogui.click(categoryX + wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+    #エラー発生時は失敗扱いとする
+    try:
+        #debug
+        #print(GetWindowRectFromName(GAME_TITLE)) #右上に強引に持ってたら　私の環境だと(1024, 0, 2320, 759)になった
+        gameWindowPosTpl = GetWindowRectFromName(GAME_TITLE)
+        #共通変数の値を調整する
+        getBaseDistance(gameWindowPosTpl[2] - gameWindowPosTpl[0] + gameWindowPosTpl[3] - gameWindowPosTpl[1])
+        
+        #debug
+        #マウスをカテゴリーのテキスト入力まで移動
+        #print(f"x:{gameWindowPosTpl[0] + CATEGORY_TXT_POS[0]}, y:{gameWindowPosTpl[1] + CATEGORY_TXT_POS[1]}")
+        categoryX,categoryY = gameWindowPosTpl[0] + wCATEGORY_TXT_X,gameWindowPosTpl[1] + wCATEGORY_TXT_Y
+        pyautogui.moveTo(categoryX,categoryY)
+        pyautogui.click(categoryX,categoryY)
+        
+        #https://qiita.com/umashikate/items/98c94cdd269ea26c41c6
+        #CTRL + A で、まずカテゴリーを消す
+        pyautogui.hotkey('ctrl', 'a')
+        time.sleep(MIN_WAIT)
+        pyautogui.hotkey('ctrl', 'c')
+        time.sleep(MIN_WAIT)
+        
+        #カテゴリーテキストへ反映
+        txt_category.insert(0.,stripQuote(pyperclip.paste()))
+        
+        #カテゴリーの位置から計算して、左上からコピーしていく
+        wTitles = []
+        for i in range(MAX_ROWGAME):
+             pyautogui.moveTo(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+             pyautogui.click(categoryX - wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
              pyautogui.hotkey('ctrl', 'c')
              wTitles.append(stripQuote(pyperclip.paste()))
-    
-    #LAST_TITLE_INDEX分入っていない場合は空文字を入れる
-    if len(wTitles) < LAST_TITLE_INDEX:
-        for i in range(LAST_TITLE_INDEX - len(wTitles)):
-            wTitles.append("")
-    #配列からテキストへ反映
-    adjustTitles(True)
+             
+             pyautogui.moveTo(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+             pyautogui.click(categoryX, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+             pyautogui.hotkey('ctrl', 'c')
+             wTitles.append(stripQuote(pyperclip.paste()))
+             
+             #18番目は入力できないので飛ばす
+             if i * 3 + 2 < LAST_TITLE_INDEX - 1:
+                 pyautogui.moveTo(categoryX + wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+                 pyautogui.click(categoryX + wTITLE_WIDTH_DISTANCE, categoryY + wTITLE_HEIGHT_DISTANCE * (i + 1))
+                 pyautogui.hotkey('ctrl', 'c')
+                 wTitles.append(stripQuote(pyperclip.paste()))
+        
+        #LAST_TITLE_INDEX分入っていない場合は空文字を入れる
+        if len(wTitles) < LAST_TITLE_INDEX:
+            for i in range(LAST_TITLE_INDEX - len(wTitles)):
+                wTitles.append("")
+        #配列からテキストへ反映
+        adjustTitles(True)
+        label_memo2.config(text="ゲーム画面から各項目へコピーしました。", foreground="black")
+    except:
+        label_memo2.config(text="ゲーム画面操作でエラーが発生しました。お題などが読み込める状態で再実行して下さい。", foreground="red")
     
     #テキスト内の文字数チェック
     changeOverWordsTextColor()
@@ -537,12 +549,16 @@ def export_to_csv():
     #csv書き出し
     #なお、９行目までしか読み込まない。１行目からデータ行として扱う
     #newline=''がないとWindows環境はバグる
-    with open(file_name, 'w', encoding="utf_8", newline='') as f:
-        #writer = csv.writer(f, lineterminator='\n')
-        writer = csv.writer(f)
-        for row in wTitles:
-            writer.writerow([row])
+    try:
+        with open(file_name, 'w', encoding=combobox_encode.get(), newline='') as f:
+            #writer = csv.writer(f, lineterminator='\n')
+            writer = csv.writer(f)
+            for row in wTitles:
+                writer.writerow([row])
         #writer.writerows(wTitles)これは使えなかった。文字列分解されてしまった
+        label_memo2.config(text="各項目の内容をCSVへ出力しました。", foreground="black")
+    except:
+        label_memo2.config(text="CSVへの出力に失敗しました。フォルダへの権限を見直して下さい。", foreground="red")
 
 #入力されたタイトルをスクリーンに入力するように整形する
 #カスタムお題作成時は３列で６行、３列目の６行目がわからない相当なので、
@@ -574,7 +590,7 @@ def adjustTitles(fromtoFlg):
             
 # Create the main window
 root = tk.Tk()
-root.title("Ai Art Impostor Put Custom Title ver 1.7")
+root.title("Ai Art Impostor Put Custom Title ver 1.8")
 
 # iconとEXEマークの画像
 logo=resource_path('AiArtImpostorPutCustomTitle.ico') #ソースコードと画像は同じディレクトリにある前提
@@ -675,12 +691,28 @@ button_clear.config( width =45 )
 button_clear.grid(
     row=MAX_ROW+3, column=0, columnspan=1, sticky=(tk.N, tk.W, tk.S, tk.E))
 
-f2 = Font(family='Helvetica', size=10, weight='bold')
-label_memo = ttk.Label(
-    frame1, text='赤文字の項目は画面へコピーすると見切れます', font=f2)
-label_memo.grid(
+# ComboBox
+#ドロップダウンリスト、CSVを読み込み・出力する時の文字コードを指定
+#一応想定は0-5で
+encode_fixed = ("utf_8","shift_jis","euc_jp")
+combobox_encode = ttk.Combobox(frame1, state="readonly", values=encode_fixed)
+combobox_encode.grid(
     row=MAX_ROW+3, column=1, columnspan=1, sticky=(tk.N, tk.W, tk.S, tk.E))
+combobox_encode.set("utf_8")
+#combobox_encode.get()
+
+f2 = Font(family='Helvetica', size=9)
+label_memo = ttk.Label(
+    frame1, text='赤文字の項目はゲーム画面へコピーすると見切れます。CSVの読込に失敗する場合はドロップボックスのutf_8を変更して下さい。', font=f2)
+label_memo.grid(
+    row=MAX_ROW+4, column=0, columnspan=2, sticky=(tk.N, tk.W, tk.S, tk.E))
+
+f3 = Font(family='Helvetica', size=12)
+label_memo2 = ttk.Label(
+    frame1, text='ここにシステムメッセージが表示されます', font=f3)
+label_memo2.grid(
+    row=MAX_ROW+5, column=0, columnspan=2, sticky=(tk.N, tk.W, tk.S, tk.E))
 
 # Run the main event loop
-root.geometry("790x375") #x * y
+root.geometry("790x425") #x * y
 root.mainloop()
