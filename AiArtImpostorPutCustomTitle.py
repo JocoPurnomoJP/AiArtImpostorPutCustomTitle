@@ -31,6 +31,10 @@ import pyperclip #コピペ用
 import math
 from bisect import bisect_left #近似値を求める時につかう
 
+#https://github.com/studio-ousia/mojimoji
+#py -m pip install mojimoji
+import mojimoji #半角文字＞全角文字に変換
+
 #debug
 #import pprint
 
@@ -523,14 +527,30 @@ def export_to_csv():
     global wTitles
     #print("export_to_csv")
     
+    #カテゴリーをファイル名にするので、Windowsでファイル名に使えない文字は全角文字に置換
+    #￥（円マーク）
+    #/（斜線、スラッシュ）
+    #: （コロン)
+    #*（アスタリスク）
+    #?（ 疑問符、クエスチョンマーク）
+    #“（ダブルコーテーション）
+    #<>（不等号）
+    #|（縦線、パイプライン）
+    replaceChars = ('\\','/',':','*','?','"','<','>','|')
+    
+    #カテゴリーはデフォルトファイル名とする
+    fileBaseName = txt_category.get(1.0, tk.END).strip()
+    
+    #一致したら全角文字に置換してしまう
+    for char in replaceChars:
+        fileBaseName = fileBaseName.replace(char, mojimoji.han_to_zen(char))
+    
     #配列クリア
     wTitles = []
     
     #txtから配列へ
     adjustTitles(False)
     
-    #カテゴリーはデフォルトファイル名とする
-    fileBaseName = txt_category.get(1.0, tk.END).strip()
     #debug
     #print(f"カテゴリ：{fileBaseName}")
     
@@ -590,7 +610,7 @@ def adjustTitles(fromtoFlg):
             
 # Create the main window
 root = tk.Tk()
-root.title("Ai Art Impostor Put Custom Title ver 1.8")
+root.title("Ai Art Impostor Put Custom Title ver 1.9")
 
 # iconとEXEマークの画像
 logo=resource_path('AiArtImpostorPutCustomTitle.ico') #ソースコードと画像は同じディレクトリにある前提
