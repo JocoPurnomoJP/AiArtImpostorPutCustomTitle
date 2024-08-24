@@ -4,9 +4,6 @@
 
 This project is to create tool for Game AIArtImpostor with over ver 0.17.0 .
 
-![GitLab](https://img.shields.io/gitlab/license/emergentmethods/AiArtImpostorPutCustomTitle?style=flat-square)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/AiArtImpostorPutCustomTitle?style=flat-square)
-
 ## これは何？／What is this?
 
 AIアートインポスターを実際にプレイしたことがあれば、ゲーム画面で作ったカスタムお題を保存できないことを知っていると思います。  
