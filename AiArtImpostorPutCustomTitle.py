@@ -63,6 +63,9 @@ LAST_TITLE_INDEX = 18
 
 #ゲームタイトル
 GAME_TITLE = "AIArtImpostor"
+#タイトル名とは別にスクリーン名があるので、その定数
+SCREEN_TITLE_EXE = GAME_TITLE + ".exe"
+SCREEN_TITLE_NOEXE = GAME_TITLE
 
 #待ち時間共通
 MIN_WAIT = 0.1
@@ -130,6 +133,9 @@ WINDOW_LIST = [
 #root.resizableも試したが、画面がちらついたので却下
 wWidth = 0
 wHeight = 0
+
+#環境によって、Taskbarに記載されるゲーム名が「AIArtImpostor.exeだったり、AIArtImposterと.exeがなかったりするのでその対策」
+currentScreenName = SCREEN_TITLE_EXE
 
 #お題を保持している変数
 wCategory = ""
@@ -336,6 +342,7 @@ def getBaseDistance(sizeNum):
 #ゲーム画面を取得してトップフォーカスする
 #成功時はTrue、失敗時はFalseを返す
 def setFocusGameWindow():
+    global currentScreenName
     #AiArtImposterから画面取得
     #print("1:" + str(datetime.datetime.now()))
     app = Application(backend='uia')
@@ -350,14 +357,26 @@ def setFocusGameWindow():
         #print("4:" + str(datetime.datetime.now()))
         #debug
         #taskbar.print_control_identifiers()
-        window_button = taskbar.child_window(title_re=GAME_TITLE + ".exe*.", control_type="Button")
+        window_button = taskbar.child_window(title_re=currentScreenName + " -*", control_type="Button")
         window_button.click_input()
         #print("5:" + str(datetime.datetime.now()))
         app.connect(title=GAME_TITLE)
         #print("6:" + str(datetime.datetime.now()))
     except:
-        messagebox.showinfo('画面取得失敗', 'ゲーム画面が見つかりません。ゲームを起動して、カスタムお題の画面を開いてから実行してください') 
-        return False
+        #１度失敗した場合は別の定数でも探してみる
+        #なおスクリーン名に３つ目が出たら、別メソッド、配列にして対応予定
+        try:
+            if currentScreenName == SCREEN_TITLE_EXE:
+                currentScreenName = SCREEN_TITLE_NOEXE
+            else:
+                currentScreenName = SCREEN_TITLE_EXE
+            taskbar = desktop.window(class_name="Shell_TrayWnd")
+            window_button = taskbar.child_window(title_re=currentScreenName + " -*", control_type="Button")
+            window_button.click_input()
+            app.connect(title=GAME_TITLE)
+        except:
+            messagebox.showinfo('画面取得失敗', 'ゲーム画面が見つかりません。ゲームを起動して、カスタムお題の画面を開いてから実行してください') 
+            return False
         
     #フォーカスをゲーム画面に当てる
     #dlg = app.top_window()
@@ -610,7 +629,7 @@ def adjustTitles(fromtoFlg):
             
 # Create the main window
 root = tk.Tk()
-root.title("Ai Art Impostor Put Custom Title ver 1.9")
+root.title("Ai Art Impostor Put Custom Title ver 1.10")
 
 # iconとEXEマークの画像
 logo=resource_path('AiArtImpostorPutCustomTitle.ico') #ソースコードと画像は同じディレクトリにある前提
