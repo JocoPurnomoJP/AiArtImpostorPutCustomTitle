@@ -1,7 +1,16 @@
-#py AiArtImpostorPutCustomTitle.py
-#py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --icon=AiArtImpostorPutCustomTitle.ico --add-data AiArtImpostorPutCustomTitle.ico:. --noconsole
-#↓コンソールが不要な場合は以下を選択。コンソールを残したままにしたい場合↑でEXEを作る
-#py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --noconsole
+# 実行手順
+# py AiArtImpostorPutCustomTitle.py
+# py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --icon=AiArtImpostorPutCustomTitle.ico --add-data AiArtImpostorPutCustomTitle.ico:. --noconsole
+# 
+# ↓コンソールが不要な場合は以下を選択。コンソールを残したままにしたい場合↑でEXEを作る
+# py -m PyInstaller AiArtImpostorPutCustomTitle.py --clean --onefile --noconsole
+
+# pip インストールする必要があるモジュール
+#
+# * pip install pywinauto
+# * pip install pyautogui
+# * pip install mojimoji
+
 from pywinauto import Desktop
 from pywinauto.application import Application
 from pywinauto import timings
@@ -36,7 +45,7 @@ from bisect import bisect_left #近似値を求める時につかう
 import mojimoji #半角文字＞全角文字に変換
 
 #debug
-#import pprint
+import pprint
 
 #ログなどの差別化のため日付時刻取得
 #https://note.nkmk.me/python-datetime-usage/
