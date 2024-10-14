@@ -442,10 +442,12 @@ def copy_to_screen():
         pyautogui.click(categoryX,categoryY)
         #print("13:" + str(datetime.datetime.now()))
         #https://qiita.com/umashikate/items/98c94cdd269ea26c41c6
-        #CTRL + A で、まずカテゴリーを消す
+        # CTRL + A で、まずカテゴリーを消す
         pyautogui.hotkey('ctrl', 'a')
         time.sleep(MIN_WAIT)
-        pyautogui.press('delete')
+        # 入力モードが全角の場合に、pyautogui.press('delete') はピリオドが入力される
+        # pyautogui.press('delete') は入力モードが全角の場合にピリオドが入力される不具合があるようなので修正
+        pyautogui.press('backspace')
         time.sleep(MIN_WAIT)
         
         #1文字ごとに0.25秒の間隔で入力
