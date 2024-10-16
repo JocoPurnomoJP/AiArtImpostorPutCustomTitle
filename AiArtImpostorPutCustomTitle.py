@@ -641,7 +641,7 @@ def adjustTitles(fromtoFlg):
             
 # Create the main window
 root = tk.Tk()
-root.title("Ai Art Impostor Put Custom Title ver 1.10")
+root.title("Ai Art Impostor Put Custom Title ver 1.10.1")
 
 # iconとEXEマークの画像
 logo=resource_path('AiArtImpostorPutCustomTitle.ico') #ソースコードと画像は同じディレクトリにある前提
