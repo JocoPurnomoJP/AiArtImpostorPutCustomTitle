@@ -186,41 +186,47 @@ def stripQuote(str):
         str = str[0:-1]
     return str.strip()
 
+#categoryのKeyReleaseイベント　実際の処理はchangeOverWordsTextColorに丸投げ
+def categoryKeyRelease(event=None):
+    #実行する関数の第二引数は配列受け入れなので、配列にして渡す
+    changeOverWordsTextColor(0,[txt_category])
+
+#txt1EntryのKeyReleaseイベント　実際の処理はchangeOverWordsTextColorに丸投げ
+def txt1KeyRelease(idx=-1):
+    #文字数を超えている場合は該当項目を赤文字にして、そうではない場合は黒文字へ戻す
+    changeOverWordsTextColor(idx,txts_col1)
+        
+#txt2EntryのKeyReleaseイベント　実際の処理はchangeOverWordsTextColorに丸投げ
+def txt2KeyRelease(idx=-1):
+    #文字数を超えている場合は該当項目を赤文字にして、そうではない場合は黒文字へ戻す
+    changeOverWordsTextColor(idx,txts_col2)
+
 #文字数を超えている場合は該当項目を赤文字にして、そうではない場合は黒文字へ戻す
-def changeOverWordsTextColor(event=None):
-    #チェックしていく、文字色を変える
-    for i in range(MAX_ROW):
-        #タグは再生性するので毎回削除
-        for tag in txts_col1[i].tag_names():
-            txts_col1[i].tag_delete(tag)
-            
-        if len(stripQuote(txts_col1[i].get(1.0, tk.END))) > MAX_WORDS:
-            txts_col1[i].tag_config("color2", foreground="red")
-            txts_col1[i].tag_add("color2",1.0, tk.END)
-        else:
-            txts_col1[i].tag_config("color1", foreground="black")
-            txts_col1[i].tag_add("color1",1.0, tk.END)
-    for i in range(MAX_ROW):
-        #タグは再生性するので毎回削除
-        for tag in txts_col2[i].tag_names():
-            txts_col2[i].tag_delete(tag)
-            
-        if len(stripQuote(txts_col2[i].get(1.0, tk.END))) > MAX_WORDS:
-            txts_col2[i].tag_config("color2", foreground="red")
-            txts_col2[i].tag_add("color2",1.0, tk.END)
-        else:
-            txts_col2[i].tag_config("color1", foreground="black")
-            txts_col2[i].tag_add("color1",1.0, tk.END)
-    #カテゴリーもチェック
-    #タグは再生性するので毎回削除
-    for tag in txt_category.tag_names():
-        txt_category.tag_delete(tag)
-    if len(stripQuote(txt_category.get(1.0, tk.END))) > MAX_WORDS:
-        txt_category.tag_config("color2", foreground="red")
-        txt_category.tag_add("color2",1.0, tk.END)
+#idx 対象の何番目のチェックをするかのIndex、-1だった場合は全てチェックする
+#txtObjAry チェックとタグ変更をする対象のtxtEntryの配列
+def changeOverWordsTextColor(idx,txtObjAry):
+    #-1がある場合は全対象、そうでなければ指定したEntryのみ対象
+    if idx == -1:
+        for i in range(MAX_ROW):
+            #タグは再生性するので毎回削除
+            for tag in txtObjAry[i].tag_names():
+                txtObjAry[i].tag_delete(tag)
+                
+            if len(stripQuote(txtObjAry[i].get(1.0, tk.END))) > MAX_WORDS:
+                txtObjAry[i].tag_config("color2", foreground="red")
+                txtObjAry[i].tag_add("color2",1.0, tk.END)
+            else:
+                txtObjAry[i].tag_config("color1", foreground="black")
+                txtObjAry[i].tag_add("color1",1.0, tk.END)
     else:
-        txt_category.tag_config("color1", foreground="black")
-        txt_category.tag_add("color1",1.0, tk.END)
+        for tag in txtObjAry[idx].tag_names():
+            txtObjAry[idx].tag_delete(tag)
+        if len(stripQuote(txtObjAry[idx].get(1.0, tk.END))) > MAX_WORDS:
+            txtObjAry[idx].tag_config("color2", foreground="red")
+            txtObjAry[idx].tag_add("color2",1.0, tk.END)
+        else:
+            txtObjAry[idx].tag_config("color1", foreground="black")
+            txtObjAry[idx].tag_add("color1",1.0, tk.END)
         
 #座標取得
 #https://qiita.com/ShortArrow/items/409f9695c458433d0744
@@ -322,7 +328,10 @@ def import_from_csv():
     txt_category.insert(0., basename[0:basename.rfind(".")])
     
     #文字数チェック
-    changeOverWordsTextColor()
+    #2024/10/26 個別に判定する方式に変えたのでそれに習って、引数と呼び出し回数調整
+    changeOverWordsTextColor(0,[txt_category])
+    changeOverWordsTextColor(-1,txts_col1)
+    changeOverWordsTextColor(-1,txts_col2)
     
 #ゲーム画面の大きさを把握して補正値を返す
 def getBaseDistance(sizeNum):
@@ -551,7 +560,10 @@ def import_from_screen():
         label_memo2.config(text="ゲーム画面操作でエラーが発生しました。お題などが読み込める状態で再実行して下さい。", foreground="red")
     
     #テキスト内の文字数チェック
-    changeOverWordsTextColor()
+    #2024/10/26 個別に判定する方式に変えたのでそれに習って、引数と呼び出し回数調整
+    changeOverWordsTextColor(0,[txt_category])
+    changeOverWordsTextColor(-1,txts_col1)
+    changeOverWordsTextColor(-1,txts_col2)
 
 #現在の画面からCSVへ
 def export_to_csv():
@@ -641,7 +653,7 @@ def adjustTitles(fromtoFlg):
             
 # Create the main window
 root = tk.Tk()
-root.title("Ai Art Impostor Put Custom Title ver 1.10.1")
+root.title("Ai Art Impostor Put Custom Title ver 1.11")
 
 # iconとEXEマークの画像
 logo=resource_path('AiArtImpostorPutCustomTitle.ico') #ソースコードと画像は同じディレクトリにある前提
@@ -690,7 +702,7 @@ txt_category.tag_config("color1", foreground="black")
 txt_category.tag_config("color2", foreground="red")
 txt_category.grid(row=1, column=0, columnspan=2, sticky=(tk.N, tk.W, tk.S, tk.E))
 txt_category.insert(0., "カテゴリーの入力")
-txt_category.bind('<KeyRelease>', changeOverWordsTextColor)
+txt_category.bind('<KeyRelease>', categoryKeyRelease)
 
 # Text カスタムタイトルは17箇所に入力
 # 見た目をインポスターがお題を当てる時に合わせる目的で２列の９行で行う、
@@ -704,13 +716,13 @@ for i in range(MAX_ROW):
     txt1.configure(font=f1)
     txt1.insert(0., str(i+1) + "お題の入力")
     txt1.grid(row=i+2, column=0, columnspan=1, sticky=(tk.N, tk.W, tk.S, tk.E))
-    txt1.bind('<KeyRelease>', changeOverWordsTextColor)
+    txt1.bind('<KeyRelease>', lambda event, i=i: txt1KeyRelease(i))
 for i in range(MAX_ROW):
     txt2 = txts_col2[i]
     txt2.configure(font=f1)
     txt2.insert(0., str(i+MAX_ROW+1) + "お題の入力")
     txt2.grid(row=i+2, column=1, columnspan=1, sticky=(tk.N, tk.W, tk.S, tk.E))
-    txt2.bind('<KeyRelease>', changeOverWordsTextColor)
+    txt2.bind('<KeyRelease>', lambda event, i=i: txt2KeyRelease(i))
 
 #最期だけわからない固定 書き込み禁止にする
 putUnknown()
