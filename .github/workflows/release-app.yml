@@ -1,0 +1,98 @@
+name: Release Python Application
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '[1-9][0-9]+.[0-9]+.[0-9]+'
+
+# 各種パラメータを環境変数として設定
+env:
+  PYTHON_VER: '3.12.10'
+  WIN_ARC: 'x64'
+  SCRIPT_NAME: AiArtImpostorPutCustomTitle
+  DRAFT_TAG_NAME: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    # 最新のWindows環境を利用するよう指定します。
+    runs-on: windows-latest
+
+    steps:
+      - name: '### チェックアウト ###'
+        uses: actions/checkout@v4
+      
+      - name: '### 環境変数設定 ###'
+        id: set_evn
+        run: | 
+          "DRAFT_TAG_NAME=v$(date +'%Y.%m.%d.%H%M%S')" >> $env:GITHUB_ENV
+      
+      - name: '### 環境変数チェック ###'
+        id: check_env
+        run: | 
+          Write-Output "Write-Output-DRAFT_TAG_NAME: $env:DRAFT_TAG_NAME"
+          echo "env:DRAFT_TAG_NAME: $env:DRAFT_TAG_NAME"
+          echo "env.DRAFT_TAG_NAME: ${{ env.DRAFT_TAG_NAME }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+        
+      - name: '### 環境セットアップ ###'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VER }}  # 使用するPythonのバージョンを指定
+          architecture: ${{ env.WIN_ARC }}       # Windowsのアーキテクチャとしてx64を指定
+
+      - name: '# pipを最新化'
+        run: python.exe -m pip install --upgrade pip
+
+      - name: '# pipでPyInstallerをインストール'
+        run: pip install PyInstaller
+
+      - name: '# pipで依存ライブラリをインストール'
+        run: |
+            pip install mojimoji
+            pip install pywinauto
+            pip install pyautogui
+
+      - name: '### ビルド ###'
+        id: build-step
+        run: |
+          python.exe -m PyInstaller ${{ env.SCRIPT_NAME }}.py --clean --onefile --icon=${{ env.SCRIPT_NAME }}.ico --add-data ${{ env.SCRIPT_NAME }}.ico:. --noconsole
+          echo ${{ github.sha }} > ${{ env.SCRIPT_NAME }}.sha
+
+      - name: '### テスト ###'
+        id: test-step
+        run: echo 'テストは現在未実装'
+
+      - name: '### 生成された.exeをアーティファクト(.zip)としてアップロード ###'
+        id: artifact-upload-step
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SCRIPT_NAME }}
+          path: dist/${{ env.SCRIPT_NAME }}.exe
+          if-no-files-found: error
+
+      - name: '### .exeを.zipにアーカイブ化 ###'
+        id: archive-step
+        run: |
+          echo "artifact-url: ${{ steps.artifact-upload-step.outputs.artifact-url }}"
+          Compress-Archive -Path dist/${{ env.SCRIPT_NAME }}.exe -DestinationPath dist/${{ env.SCRIPT_NAME }}.zip
+
+      - name: '### リリース ###'
+        id: release-step
+        uses: softprops/action-gh-release@v2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            dist/${{ env.SCRIPT_NAME }}.zip
+            dist/${{ env.SCRIPT_NAME }}.exe
+            Release.txt
+          name: ${{ github.ref_type == 'tag' && github.ref_name || env.DRAFT_TAG_NAME }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || env.DRAFT_TAG_NAME }}
+          draft: ${{ github.event_name }} == "workflow_dispatch"
+          prerelease: ${{ github.event_name }} == "workflow_dispatch"
+          generate_release_notes: ${{ github.event_name == 'tag' && true || false }}
